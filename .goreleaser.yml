@@ -1,0 +1,61 @@
+before:
+  hooks:
+    - go generate -v ./...
+builds:
+- id: configsvr
+  env:
+  - CGO_ENABLED=0
+  main: server.go
+  binary: configsvr
+  ldflags:
+  - -s -w -X github.com/bhojpur/configure/cmd/server.version={{.Version}}-{{.ShortCommit}}
+- id: configctl
+  env:
+  - CGO_ENABLED=0
+  main: client.go
+  binary: configctl
+  flags:
+    - -tags=configctl
+  ldflags:
+  - -s -w -X github.com/bhojpur/configure/cmd/client.version={{.Version}}-{{.ShortCommit}}
+archives:
+- id: configsvr
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    386: i386
+    amd64: x86_64
+  builds:
+  - configuresvr
+- id: configurectl
+  files:
+  - "none*"
+  format: binary
+  builds:
+  - configurectl
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    386: i386
+    amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+release:
+  prerelease: auto
+dockers:
+  - goos: linux
+    goarch: amd64
+    goarm: ''
+    dockerfile: Dockerfile
+    image_templates:
+    - "ghcr.io/bhojpur/configure:{{ .Tag }}"
+    extra_files:
+    - README.md
